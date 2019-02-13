@@ -1,0 +1,418 @@
+#include <iostream>
+#include <string>
+#include <iomanip>
+#include <queue>
+#include <sstream>
+#include <stack>
+#include <fstream>
+#include <ostream>
+//#include "ArgumentManager.h"
+
+
+using namespace std;
+
+struct node {
+    int data;
+    int balanceFactor;
+    node *left;
+    node *right;
+};
+struct node* newNode(int key) {
+    struct node* temp = new node;
+    temp->data = key;
+    temp->left = temp->right = NULL;
+    return temp;
+};
+
+class binaryTree {
+private:
+    node * head;
+public:
+    //binaryTree();
+    binaryTree() {
+        node *head = new node;
+        head = NULL;
+        //head->left = NULL;
+        //head->right = NULL;
+    }
+    bool isEmpty() {
+        return head = NULL;
+    }
+    void inorder(node *root) {
+        if (root != NULL) {
+            inorder(root->left);
+            cout << root->data << " ";
+            inorder(root->right);
+        }
+    }
+    void inorder3(node *root, ofstream &fout) {
+        if (root != NULL) {
+            inorder3(root->left, fout);
+            fout << root->data << " ";
+            inorder3(root->right, fout);
+        }
+    }
+    void postorder(node *root) {
+        if (root != NULL) {
+            postorder(root->left);
+            postorder(root->right);
+            cout << root->data << " ";
+        }
+    }
+    void postorder3(node *root, ofstream &fout) {
+        if (root != NULL) {
+            postorder3(root->left, fout);
+            postorder3(root->right, fout);
+            fout << root->data << " ";
+        }
+    }
+    void preorder(node *root) {
+        if (root != NULL) {
+            cout << root->data << " ";
+            preorder(root->left);
+            preorder(root->right);
+        }
+    }
+    void preorder3(node *root, ofstream &fout) {
+        if (root != NULL) {
+            fout << root->data << " ";
+            preorder3(root->left, fout);
+            preorder3(root->right, fout);
+        }
+    }
+    
+    void inOrderTraversal3(ofstream &fout) {
+        inorder3(head, fout);
+    }
+    void postOrderTraversal3(ofstream &fout) {
+        postorder3(head, fout);
+    }
+    void preOrderTraversal3(ofstream &fout) {
+        preorder3(head, fout);
+    }
+    void postOrderTraversal() {
+        postorder(head);
+    }
+    void preOrderTraversal() {
+        preorder(head);
+    }
+    void inOrderTraversal() {
+        inorder(head);
+    }
+    void rotateToLeft(node* &root) {                                    //Function that rotates left
+        node *p;
+        if (root == NULL)
+            //    cerr << "Error in the Tree" << endl;
+            return;
+        else if (root->right == NULL)
+            //cerr << "Error in the Tree:"
+            //<< " No right subtree to rotate." << endl;
+            return;
+        else
+        {
+            p = root->right;
+            root->right = p->left;
+            p->left = root;
+            root = p;
+        }
+    }// rotate left
+    void rotateToRight(node* &root) {                                    //Function that rotates right
+        node *p;
+        if (root == NULL)
+            //cerr << "Error in the Tree" << endl;
+            return;
+        else if (root->left == NULL)
+            //cerr << "Error in the Tree:"
+            //<< " No right subtree to rotate." << endl;
+            return;
+        else
+        {
+            p = root->left;
+            root->left = p->right;
+            p->right = root;
+            root = p;
+        }
+    }// rotate left
+    void balanceFromLeft(node* &root) {                                    //Function that balances from left
+        node *p;
+        node *w;
+        
+        p = root->left;
+        
+        switch (p->balanceFactor) {
+            case -1:
+                root->balanceFactor = 0;
+                p->balanceFactor = 0;
+                rotateToRight(root);
+                break;
+            case 0:
+                //cerr << "Error: Cannot balance form the left." << endl;
+                break;
+            case 1:
+                w = p->right;
+                switch (w->balanceFactor) {
+                    case -1:
+                        root->balanceFactor = 1;
+                        p->balanceFactor = 0;
+                        break;
+                    case 0:
+                        root->balanceFactor = 0;
+                        p->balanceFactor = 0;
+                        break;
+                    case 1:
+                        root->balanceFactor = 0;
+                        p->balanceFactor = -1;
+                }//end inside switch
+                w->balanceFactor = 0;
+                rotateToLeft(p);
+                root->left = p;
+                rotateToRight(root);
+        } //end outside switch
+    }//end balanceFromLeft
+    void balanceFromRight(node* &root) {                                    //Function that balances from Right
+        node *p;
+        node *w;
+        
+        p = root->right;
+        
+        switch (p->balanceFactor) {
+            case -1:
+                w = p->left;
+                switch (w->balanceFactor) {
+                    case -1:
+                        root->balanceFactor = 0;
+                        p->balanceFactor = 1;
+                        break;
+                    case 0:
+                        root->balanceFactor = 0;
+                        p->balanceFactor = 0;
+                        break;
+                    case 1:
+                        root->balanceFactor = -1;
+                        p->balanceFactor = 0;
+                }//end inside switch
+                w->balanceFactor = 0;
+                rotateToRight(p);
+                root->right = p;
+                rotateToLeft(root);
+                //end outside switch
+            case 0:
+                //cerr << "Error: Cannot balance form the left." << endl;
+                break;
+            case 1:
+                root->balanceFactor = 0;
+                p->balanceFactor = 0;
+                rotateToLeft(root);
+        } //end outside switch
+    }//end balanceFromRight
+    void insertIntoAVL(node* &root, node *newNode, bool& isTaller) {                //Function that inserts new node to tree
+        if (root == NULL) {
+            root = newNode;
+            isTaller = true;
+        }
+        else if (root->data == newNode->data)
+            //cerr << "No Duplicates are Allowed." << endl;
+            return;
+        else if (root->data > newNode->data) {
+            insertIntoAVL(root->left, newNode, isTaller);
+            if (isTaller) //after insertion, the subtree grew in height
+                
+                switch (root->balanceFactor) {
+                    case -1:
+                        balanceFromLeft(root);
+                        isTaller = false;
+                        break;
+                    case 0:
+                        root->balanceFactor = -1;
+                        isTaller = true;
+                        break;
+                    case 1:
+                        root->balanceFactor = 0;
+                        isTaller = false;
+                }//end switch
+        }// end if
+        else {
+            insertIntoAVL(root->right, newNode, isTaller);
+            if(isTaller) // after insertion, the subtree grew in height
+                switch (root->balanceFactor) {
+                    case -1:
+                        root->balanceFactor = 0;
+                        isTaller = false;
+                        break;
+                    case 0:
+                        root->balanceFactor = 1;
+                        isTaller = true;
+                        break;
+                    case 1:
+                        balanceFromRight(root);
+                        isTaller = false;
+                        break;
+                        
+                }// end switch
+        }//end else
+        
+    }//insertIntoAVL
+    void insert2(const int val) {                        //Main Insert Function
+        bool isTaller = false;
+        node *newNode;
+        newNode = new node;
+        newNode->data = val;
+        newNode->balanceFactor = 0;
+        newNode->left = NULL;
+        newNode->right = NULL;
+        
+        insertIntoAVL(head, newNode, isTaller);
+    }//insert2
+    int max(int x, int y) const {                //Max function
+        if (x >= y)
+            return x;
+        else return y;
+    }
+    int height(node *p) const {                    //Returns height of tree
+        if (p == NULL)
+            return 0;
+        else return 1 + max(height(p->left), height(p->right));
+    }
+    
+    void printKDistant(node *root, int k, int h) {
+        if (k > h) {
+            cout << "empty";
+        }
+        else {
+            if (root == NULL) return;
+            if (k == 1)
+            {
+                cout << root->data << " ";
+                return;
+            }
+            else
+            {
+                printKDistant(root->left, k - 1, h);
+                printKDistant(root->right, k - 1, h);
+            }
+        }
+    }
+    void printKDistant2(node *root, int k, int h,ofstream &fout) {
+        if (k > h) {
+            fout << "empty";
+        }
+        else {
+            if (root == NULL) return;
+            if (k == 1)
+            {
+                fout << root->data << " ";
+                return;
+            }
+            else
+            {
+                printKDistant2(root->left, k - 1, h, fout);
+                printKDistant2(root->right, k - 1, h, fout);
+            }
+        }
+    }
+    void printLevel3(int k) {
+        printKDistant(head, k, height(head));
+    }
+    void printLevel4(int k, ofstream &fout) {
+        printKDistant2(head, k, height(head), fout);
+    }
+    void printHeight() {
+        cout << "Height of tree is: " << height(head) << endl;
+    }
+};
+int main(int argc, char* argv[]) {
+    
+//    if (argc < 2) {
+//        cout << "Usage: Sort \"input=<file>;output=<file>;sort=<file>\"" << std::endl;
+//        return -1;
+//    }
+//    ArgumentManager am(argc, argv);
+//    const string fileName = am.get("value");         // File input name from argument manager
+//    const string commandName = am.get("command");         // File output name from argument manager
+//    const string outfileName = am.get("output");             // File sort name from argument manager
+    string fileName = "input32.txt";
+    string commandName = "command32.txt";
+    string outfileName = "outfile32.txt";
+    
+    int val;
+    int count = 0;
+    //string file1 = "input33.txt";                            // Test input
+    //string file2 = "command33.txt";                        // Test Command
+    //string outfile = "test.txt";                            // Test output
+    ifstream input;
+    ofstream output;
+    //input.open(file1);
+    input.open(fileName);
+    
+    if (!input) {
+        cout << "File did not open." << endl;
+    }
+    while (input >> val) {
+        count++;
+    }
+    input.close();
+    const int size = count;
+    //cout << "Count is: " << count << endl;
+    int *arrP;
+    arrP = new int[size];
+    input.open(fileName);
+    //output.open(outfile);
+    int i = 0;
+    while (input >> val) {
+        arrP[i] = val;
+        i++;
+    }
+    input.close();
+    binaryTree myTree;
+    for (int k = 0; k < size; k++) {
+        myTree.insert2(arrP[k]);
+    }
+    delete arrP;
+    arrP = NULL;
+    //input.open(file2); // opens command file
+    input.open(commandName);
+    //output.open(outfile);
+    output.open(outfileName);
+    
+    string line;
+    string command;
+    int levelCommand = 0;
+    //myTree.printHeight();
+    while (getline(input, line)) {
+        istringstream ss(line);
+        getline(ss, command);
+        if (command == "Postorder Traversal") {
+            myTree.postOrderTraversal();
+            myTree.postOrderTraversal3(output);
+            cout << endl;
+            output << endl;
+        }
+        if (command == "Preorder Traversal") {
+            myTree.preOrderTraversal();
+            myTree.preOrderTraversal3(output);
+            cout << endl;
+            output << endl;
+        }
+        if (command == "Inorder Traversal") {
+            myTree.inOrderTraversal();
+            myTree.inOrderTraversal3(output);
+            cout << endl;
+            output << endl;
+        }
+        if (command.substr(0,5)== "Level") {
+            //    cout << "level Command Found" << endl;
+            levelCommand = stoi(command.substr(6, 9));
+            //    cout << "Level Command is: " << levelCommand << endl;
+            //    cout << "Level " << levelCommand << " is: ";
+            myTree.printLevel3(levelCommand);
+            myTree.printLevel4(levelCommand, output);
+            //    myTree.printAllLevels();
+            cout << endl;
+            output << endl;
+        }
+    }
+    
+    input.close();
+    output.close();
+    return 0;
+}
